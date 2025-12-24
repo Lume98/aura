@@ -1,0 +1,158 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+
+export async function getStaticPaths() {
+	const prompts = await getCollection('prompts');
+	return prompts.map(prompt => ({
+		params: { id: prompt.id },
+		props: { prompt },
+	}));
+}
+
+const { prompt } = Astro.props;
+const { Content } = await render(prompt);
+---
+
+<Layout title={prompt.data.title} description={prompt.data.description}>
+	<div class="max-w-4xl mx-auto px-6">
+		<nav class="mb-12">
+			<a href="/prompts" class="group inline-flex items-center gap-2 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] hover:text-indigo-600 transition-colors">
+				<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 group-hover:-translate-x-1 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+				返回提示词库
+			</a>
+		</nav>
+
+		<header class="mb-16 relative">
+			<div class="flex flex-wrap items-center gap-4 mb-8">
+				<span class="px-4 py-1.5 bg-indigo-50 text-indigo-600 text-[10px] font-black rounded-full uppercase tracking-widest shadow-sm shadow-indigo-100/50">
+					{prompt.data.category}
+				</span>
+				<div class="flex items-center gap-2 text-slate-300">
+					<span class="text-[11px] font-bold uppercase tracking-tight">发布于</span>
+					<time class="text-[11px] font-black tabular-nums">
+						{prompt.data.date?.toLocaleDateString('zh-CN')}
+					</time>
+				</div>
+			</div>
+			
+			<h1 class="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 mb-8 tracking-tighter leading-tight">
+				{prompt.data.title}
+			</h1>
+			
+			<p class="text-xl text-slate-500 font-medium leading-relaxed max-w-3xl mb-10">
+				{prompt.data.description}
+			</p>
+			
+			<div class="flex flex-wrap gap-3">
+				{prompt.data.tags.map(tag => (
+					<span class="px-4 py-2 bg-white border border-slate-100 text-slate-400 text-[11px] font-bold rounded-xl shadow-sm hover:border-indigo-100 hover:text-indigo-500 transition-all cursor-default">
+						#{tag}
+					</span>
+				))}
+			</div>
+
+			<!-- Decorative element -->
+			<div class="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/5 rounded-full blur-3xl -z-10"></div>
+		</header>
+
+		<div class="group relative">
+			<div class="absolute -inset-1 bg-gradient-to-r from-indigo-500/10 to-blue-500/10 rounded-[2.5rem] blur opacity-25 group-hover:opacity-100 transition duration-1000"></div>
+			<div class="relative prose prose-slate prose-indigo max-w-none bg-white p-8 md:p-16 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/20 leading-relaxed font-medium text-slate-600">
+				<Content />
+			</div>
+		</div>
+
+		<section class="mt-20 pt-10">
+			<div class="bg-slate-900 rounded-[3rem] p-12 md:p-20 text-center relative overflow-hidden group shadow-2xl shadow-indigo-500/20">
+				<div class="relative z-10">
+					<h2 class="text-3xl md:text-4xl font-black text-white mb-6 tracking-tight">准备好尝试这个 Prompt 了吗？</h2>
+					<p class="text-slate-400 font-medium mb-12 max-w-xl mx-auto opacity-80 leading-relaxed">
+						点击下方按钮将提示词全文复制到您的剪贴板，立即在 ChatGPT、Claude 或您的工作区中使用。
+					</p>
+					<button 
+						id="copy-button"
+						class="group relative inline-flex items-center gap-3 px-10 py-5 bg-indigo-600 text-white rounded-2xl font-black hover:bg-indigo-500 transition-all active:scale-95 shadow-2xl shadow-indigo-500/40 overflow-hidden"
+					>
+						<span class="relative z-10 flex items-center gap-3">
+							<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+							一键复制提示词全文
+						</span>
+						<div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
+					</button>
+				</div>
+				
+				<!-- Animated background circles -->
+				<div class="absolute -top-20 -left-20 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000"></div>
+				<div class="absolute -bottom-20 -right-20 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000"></div>
+			</div>
+		</section>
+	</div>
+</Layout>
+
+<script is:inline>
+	document.getElementById('copy-button')?.addEventListener('click', () => {
+		const proseElement = document.querySelector('.prose');
+		// Remove hidden elements and extract text more accurately
+		const content = proseElement.innerText;
+		
+		navigator.clipboard.writeText(content).then(() => {
+			const btn = document.getElementById('copy-button');
+			const originalHtml = btn.innerHTML;
+			
+			btn.innerHTML = `
+				<span class="relative z-10 flex items-center gap-3">
+					<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+					已成功复制到剪贴板
+				</span>
+			`;
+			btn.classList.replace('bg-indigo-600', 'bg-green-600');
+			btn.classList.replace('shadow-indigo-500/40', 'shadow-green-500/40');
+			
+			setTimeout(() => {
+				btn.innerHTML = originalHtml;
+				btn.classList.replace('bg-green-600', 'bg-indigo-600');
+				btn.classList.replace('shadow-green-500/40', 'shadow-indigo-500/40');
+			}, 2500);
+		});
+	});
+</script>
+
+<style is:global>
+	@keyframes shimmer {
+		100% {
+			transform: translateX(100%);
+		}
+	}
+	.animate-shimmer {
+		animation: shimmer 2s infinite;
+	}
+
+	.prose h2 {
+		@apply text-3xl font-black mt-16 mb-8 text-slate-900 tracking-tight;
+	}
+	.prose h3 {
+		@apply text-xl font-black mt-12 mb-6 text-slate-800 tracking-tight;
+	}
+	.prose p {
+		@apply my-6 leading-[1.8] text-slate-500 font-medium;
+	}
+	.prose ul {
+		@apply list-none my-8 space-y-4;
+	}
+	.prose li {
+		@apply relative pl-8 before:content-[''] before:absolute before:left-0 before:top-3 before:w-2 before:h-2 before:bg-indigo-500/20 before:border-2 before:border-indigo-500 before:rounded-full;
+	}
+	.prose code {
+		@apply px-2 py-0.5 bg-slate-50 text-indigo-600 rounded-lg text-[0.9em] font-bold font-mono border border-slate-100;
+	}
+	.prose pre {
+		@apply p-8 bg-slate-50 border border-slate-100 text-slate-700 rounded-3xl my-10 overflow-x-auto shadow-sm;
+	}
+	.prose pre code {
+		@apply p-0 bg-transparent text-inherit border-none text-[0.85em] font-medium leading-relaxed;
+	}
+	.prose blockquote {
+		@apply border-l-4 border-indigo-500/20 pl-8 italic text-slate-400 font-medium my-10;
+	}
+</style>

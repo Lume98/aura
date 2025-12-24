@@ -1,0 +1,66 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../../layouts/Layout.astro';
+
+export async function getStaticPaths() {
+	const allPrompts = await getCollection('prompts');
+	const tags = [...new Set(allPrompts.flatMap(p => p.data.tags))];
+	
+	return tags.map(tag => ({
+		params: { tag },
+		props: { 
+			tag,
+			prompts: allPrompts.filter(p => p.data.tags.includes(tag))
+		}
+	}));
+}
+
+const { tag, prompts } = Astro.props;
+const sortedPrompts = prompts.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+
+<Layout title={`标签：${tag}`} description={`包含 #${tag} 标签的所有提示词。`}>
+	<div class="max-w-6xl mx-auto">
+		<nav class="mb-8">
+			<a href="/prompts" class="text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1 text-sm">
+				&larr; 返回所有提示词
+			</a>
+		</nav>
+
+		<header class="mb-12">
+			<h1 class="text-3xl font-bold mb-4">标签：#{tag}</h1>
+			<p class="text-slate-600">包含此标签的共有 {prompts.length} 个提示词。</p>
+		</header>
+
+		<div class="grid md:grid-cols-3 gap-6">
+			{sortedPrompts.map(prompt => (
+				<article class="bg-white border border-slate-200 rounded-xl p-6 hover:shadow-md transition-shadow flex flex-col h-full">
+					<div class="flex items-center justify-between mb-3">
+						<span class="text-xs font-bold px-2 py-1 bg-indigo-100 text-indigo-700 rounded uppercase tracking-wider">
+							{prompt.data.category}
+						</span>
+						<time class="text-xs text-slate-400">
+							{prompt.data.date.toLocaleDateString('zh-CN')}
+						</time>
+					</div>
+					<h3 class="text-xl font-bold mb-3">
+						<a href={`/prompts/${prompt.id}`} class="hover:text-indigo-600 transition-colors">
+							{prompt.data.title}
+						</a>
+					</h3>
+					<p class="text-slate-500 text-sm mb-6 flex-grow">
+						{prompt.data.description}
+					</p>
+					<div class="flex flex-wrap gap-2">
+						{prompt.data.tags.map(t => (
+							<span class={`text-[10px] px-1.5 py-0.5 rounded ${t === tag ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+								{t}
+							</span>
+						))}
+					</div>
+				</article>
+			))}
+		</div>
+	</div>
+</Layout>
+
